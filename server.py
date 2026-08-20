@@ -1,24 +1,30 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
 import json
+import os
 
 app = Flask(__name__)
 
-# Load or create the database
-try:
-    with open("database.json", "r") as f:
-        db = json.load(f)
-except:
-    db = {"players": 0}
+DATA_FILE = "database.json"
+
+# Create file if missing
+if not os.path.exists(DATA_FILE):
+    with open(DATA_FILE, "w") as f:
+        json.dump({"players": 0}, f)
 
 @app.route("/played", methods=["POST"])
 def played():
-    db["players"] += 1
-    with open("database.json", "w") as f:
-        json.dump(db, f)
-    return {"status": "ok", "players": db["players"]}
+    with open(DATA_FILE, "r") as f:
+        data = json.load(f)
+    data["players"] += 1
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f)
+    return jsonify(data)
 
 @app.route("/count", methods=["GET"])
 def count():
-    return jsonify(db)
+    with open(DATA_FILE, "r") as f:
+        data = json.load(f)
+    return jsonify(data)
 
-app.run(port=5000)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
